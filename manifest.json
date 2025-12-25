@@ -1,0 +1,13 @@
+{
+  "name": "影音秘書｜v1.4",
+  "short_name": "影音秘書",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#0f3d2e",
+  "theme_color": "#0f3d2e",
+  "description": "影音秘書：從文案稿到發佈排程（模板生成｜到點語音＋彈窗預覽｜上架包一鍵準備）",
+  "icons": [
+    { "src": "./icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "./icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
