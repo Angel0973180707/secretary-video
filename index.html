@@ -1,1 +1,1658 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>影音秘書｜v1.4</title>
 
+  <!-- PWA -->
+  <meta name="theme-color" content="#0f3d2e" />
+  <meta name="background-color" content="#0f3d2e" />
+  <meta name="description" content="影音秘書：從文案稿到發佈排程（模板生成｜24小時制｜到點語音＋彈窗預覽｜上架包一鍵準備）" />
+  <link rel="manifest" href="./manifest.json" />
+  <link rel="icon" href="./icon-192.png" />
+  <link rel="apple-touch-icon" href="./icon-192.png" />
+
+  <style>
+    :root{
+      --bg:#0f3d2e;
+      --text:#eef7f2;
+      --muted:#b9d1c6;
+      --line:rgba(255,255,255,.12);
+      --btn:#f0a04b;
+      --btn2:#ffffff1a;
+      --danger:#ff6b6b;
+      --ok:#69db7c;
+      --shadow: 0 10px 30px rgba(0,0,0,.25);
+      --r: 18px;
+      --r2: 14px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans TC", "PingFang TC", "Heiti TC", Arial, sans-serif;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:var(--sans);
+      background:linear-gradient(180deg, #0b2e23, var(--bg));
+      color:var(--text);
+    }
+    .wrap{max-width:1100px; margin:0 auto; padding:16px;}
+    header.top{
+      display:flex; gap:12px; align-items:flex-end; justify-content:space-between;
+      padding:10px 6px 16px;
+    }
+    .brand h1{margin:0; font-size:22px; letter-spacing:.5px}
+    .brand p{margin:6px 0 0; color:var(--muted); font-size:13px}
+    .row{display:flex; gap:10px; flex-wrap:wrap; align-items:center}
+    .pill{
+      padding:10px 12px; border-radius:999px; background:rgba(255,255,255,.08);
+      border:1px solid var(--line); color:var(--text); font-size:13px;
+    }
+    .pill b{font-family:var(--mono)}
+    .grid{
+      display:grid; grid-template-columns: 340px 1fr; gap:14px;
+    }
+    @media (max-width: 980px){ .grid{grid-template-columns: 1fr;} }
+
+    .card{
+      background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      border:1px solid var(--line);
+      border-radius:var(--r);
+      box-shadow:var(--shadow);
+      overflow:hidden;
+    }
+    .card .hd{
+      padding:12px 14px;
+      border-bottom:1px solid var(--line);
+      background:rgba(0,0,0,.14);
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+    }
+    .card .hd h2{margin:0; font-size:14px; letter-spacing:.4px; color:var(--text)}
+    .card .bd{padding:14px}
+    .muted{color:var(--muted); font-size:12px; line-height:1.55}
+
+    .btn{
+      appearance:none; border:none; cursor:pointer;
+      padding:10px 12px; border-radius:999px;
+      background:var(--btn); color:#1c1207;
+      font-weight:700; font-size:13px;
+    }
+    .btn:active{transform:translateY(1px)}
+    .btn.ghost{
+      background:var(--btn2);
+      color:var(--text);
+      border:1px solid var(--line);
+      font-weight:650;
+    }
+    .btn.danger{
+      background:rgba(255,107,107,.15);
+      border:1px solid rgba(255,107,107,.35);
+      color:#ffd2d2;
+    }
+    .btn.ok{
+      background:rgba(105,219,124,.18);
+      border:1px solid rgba(105,219,124,.35);
+      color:#d8ffe1;
+    }
+    .btn.small{padding:8px 10px; font-size:12px}
+    .btnRow{display:flex; gap:8px; flex-wrap:wrap; align-items:center}
+
+    .tabs{
+      display:flex; gap:8px; flex-wrap:wrap;
+      padding:10px 14px; border-bottom:1px solid var(--line);
+      background:rgba(0,0,0,.10);
+    }
+    .tab{
+      cursor:pointer; user-select:none;
+      padding:8px 10px; border-radius:999px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.06);
+      font-weight:700; font-size:12px;
+    }
+    .tab.active{
+      background:rgba(240,160,75,.18);
+      border-color:rgba(240,160,75,.40);
+    }
+    .panel{display:none; padding:14px}
+    .panel.active{display:block}
+
+    .formGrid{display:grid; grid-template-columns: 1fr 1fr; gap:10px}
+    @media (max-width: 780px){ .formGrid{grid-template-columns:1fr} }
+    .field label{display:block; font-size:12px; color:var(--muted); margin:0 0 6px}
+    .input, select, textarea{
+      width:100%;
+      background:rgba(0,0,0,.14);
+      border:1px solid var(--line);
+      color:var(--text);
+      border-radius:12px;
+      padding:10px 12px;
+      font-size:13px;
+      outline:none;
+    }
+    textarea{min-height:120px; resize:vertical; line-height:1.55}
+    .hr{height:1px; background:var(--line); margin:12px 0}
+    .split2{display:grid; grid-template-columns: 1fr 1fr; gap:10px}
+    @media (max-width: 980px){ .split2{grid-template-columns:1fr} }
+
+    .kpi{display:flex; gap:8px; flex-wrap:wrap}
+    .warn{
+      padding:10px 12px;
+      border-radius:12px;
+      border:1px solid rgba(255,107,107,.35);
+      background:rgba(255,107,107,.12);
+      color:#ffd2d2; font-size:12px; line-height:1.55;
+    }
+    .okbox{
+      padding:10px 12px;
+      border-radius:12px;
+      border:1px solid rgba(105,219,124,.35);
+      background:rgba(105,219,124,.12);
+      color:#d8ffe1; font-size:12px; line-height:1.55;
+    }
+    .mono{font-family:var(--mono)}
+
+    /* ===== List item ===== */
+    .list{display:flex; flex-direction:column; gap:10px}
+    .item{
+      border:1px solid var(--line);
+      background:rgba(0,0,0,.14);
+      border-radius:var(--r2);
+      padding:12px;
+      display:flex; gap:10px; justify-content:space-between; align-items:flex-start;
+    }
+    .item.isDue{
+      border-color: rgba(240,160,75,.55);
+      box-shadow: 0 0 0 2px rgba(240,160,75,.12) inset;
+      background: rgba(240,160,75,.08);
+    }
+    .item .meta{min-width:0}
+    .item .ttl{font-weight:800; font-size:14px; margin:0 0 6px}
+    .item .sub{margin:0; font-size:12px; color:var(--muted); line-height:1.45}
+    .tag{
+      display:inline-block;
+      padding:4px 8px; border-radius:999px;
+      background:rgba(255,255,255,.08); border:1px solid var(--line);
+      font-size:11px; color:var(--text); margin-right:6px; margin-top:6px;
+    }
+    .status{
+      font-size:11px; padding:5px 8px; border-radius:999px; border:1px solid var(--line);
+      background:rgba(255,255,255,.06);
+    }
+    .status.scheduled{border-color:rgba(240,160,75,.45); background:rgba(240,160,75,.12)}
+    .status.published{border-color:rgba(105,219,124,.45); background:rgba(105,219,124,.12)}
+    .status.draft{border-color:rgba(255,255,255,.18)}
+    .status.due{
+      border-color:rgba(240,160,75,.75);
+      background:rgba(240,160,75,.20);
+      font-weight:800;
+    }
+
+    /* ===== Published collapse (v1.4) ===== */
+    .collapseHd{
+      display:flex; align-items:center; justify-content:space-between;
+      gap:10px; padding:10px 12px;
+      border:1px solid var(--line);
+      background:rgba(0,0,0,.10);
+      border-radius:14px;
+      cursor:pointer; user-select:none;
+    }
+    .collapseHd b{font-size:13px}
+    .collapseBody{margin-top:10px; display:none}
+    .collapseBody.show{display:block}
+
+    /* ===== Due Modal ===== */
+    .modalMask{
+      position:fixed; inset:0;
+      background:rgba(0,0,0,.55);
+      display:none;
+      align-items:center; justify-content:center;
+      padding:16px;
+      z-index:9999;
+    }
+    .modalMask.show{display:flex}
+    .modal{
+      width:min(820px, 100%);
+      background:linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.06));
+      border:1px solid rgba(240,160,75,.35);
+      border-radius:20px;
+      box-shadow:0 20px 70px rgba(0,0,0,.45);
+      overflow:hidden;
+    }
+    .modalHd{
+      padding:14px 16px;
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      background:rgba(240,160,75,.10);
+      border-bottom:1px solid rgba(255,255,255,.12);
+    }
+    .modalHd b{font-size:14px}
+    .modalBd{padding:14px 16px}
+    .modalBd .big{
+      font-weight:900;
+      font-size:16px;
+      line-height:1.35;
+      margin:0 0 8px;
+    }
+    .modalBd .metaLine{
+      color:var(--muted);
+      font-size:12px;
+      margin:0 0 8px;
+    }
+    .countdown{
+      display:inline-block;
+      margin:0 0 12px;
+      padding:8px 10px;
+      border-radius:999px;
+      border:1px solid rgba(240,160,75,.35);
+      background:rgba(240,160,75,.12);
+      font-size:12px;
+      font-family:var(--mono);
+    }
+
+    .modalFoot{
+      padding:12px 16px;
+      border-top:1px solid rgba(255,255,255,.12);
+      background:rgba(0,0,0,.10);
+      display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end;
+    }
+
+    /* Preview in modal */
+    .previewBox{
+      margin-top:10px;
+      border:1px solid rgba(255,255,255,.14);
+      background:rgba(0,0,0,.12);
+      border-radius:14px;
+      overflow:hidden;
+    }
+    .previewHd{
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      padding:10px 12px;
+      border-bottom:1px solid rgba(255,255,255,.12);
+      background:rgba(0,0,0,.10);
+    }
+    .previewHd .ttl{font-weight:900; font-size:13px}
+    .previewTabs{display:flex; gap:8px; flex-wrap:wrap}
+    .ptab{
+      cursor:pointer; user-select:none;
+      padding:6px 10px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.14);
+      background:rgba(255,255,255,.06);
+      font-size:12px;
+      font-weight:800;
+    }
+    .ptab.active{background:rgba(240,160,75,.18); border-color:rgba(240,160,75,.40)}
+    .previewBody{
+      padding:12px;
+      max-height:260px;
+      overflow:auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .previewPre{
+      white-space:pre-wrap;
+      word-break:break-word;
+      margin:0;
+      font-family:var(--sans);
+      font-size:12.5px;
+      line-height:1.6;
+      color:var(--text);
+    }
+    .hintTiny{font-size:12px; color:var(--muted); margin:6px 0 0;}
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <header class="top">
+      <div class="brand">
+        <h1>影音秘書｜v1.4</h1>
+        <p>模板生成 → AI 優化 → 微調 → 上架包 → 排程（倒數顯示｜到點語音＋彈窗預覽｜已發佈折疊）</p>
+      </div>
+      <div class="row">
+        <div class="pill">現在：<b id="nowText">-</b></div>
+        <div class="pill">今日到點：<b id="dueText">0</b></div>
+      </div>
+    </header>
+
+    <div class="grid">
+      <!-- Left: list -->
+      <section class="card">
+        <div class="hd">
+          <h2>影片清單</h2>
+          <div class="btnRow">
+            <button class="btn small" id="btnNew">＋ 新增</button>
+            <button class="btn ghost small" id="btnExport">匯出 JSON</button>
+            <button class="btn ghost small" id="btnImport">匯入 JSON</button>
+          </div>
+        </div>
+        <div class="bd">
+          <div class="field">
+            <label>快速搜尋（標題/系列/狀態）</label>
+            <input class="input" id="q" placeholder="例：幸福教養 / 詩詞人生 / 人生感悟 / 排程" />
+          </div>
+
+          <div class="hr"></div>
+
+          <div class="muted" style="margin:0 0 10px;">
+            v1.4：排程影片會顯示倒數；到點彈窗可直接預覽上架包並一鍵複製；已發佈收在折疊區。
+          </div>
+
+          <div class="list" id="list"></div>
+
+          <div class="hr"></div>
+
+          <div class="collapseHd" id="pubToggle" aria-expanded="false">
+            <b>已發佈（折疊）</b>
+            <span class="muted" id="pubCount">0</span>
+          </div>
+          <div class="collapseBody" id="pubBody">
+            <div class="list" id="pubList"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Right: editor -->
+      <section class="card">
+        <div class="hd">
+          <h2>編輯區</h2>
+          <div class="btnRow">
+            <span class="status draft" id="statusBadge">draft</span>
+            <button class="btn ghost small" id="btnDuplicate">複製此片</button>
+            <button class="btn danger small" id="btnDelete">刪除</button>
+          </div>
+        </div>
+
+        <div class="tabs" id="tabs">
+          <div class="tab active" data-tab="basic">基本</div>
+          <div class="tab" data-tab="script">文案</div>
+          <div class="tab" data-tab="publish">上架包</div>
+          <div class="tab" data-tab="settings">設定</div>
+        </div>
+
+        <!-- BASIC -->
+        <div class="panel active" id="panel-basic">
+          <div class="formGrid">
+            <div class="field">
+              <label>系列</label>
+              <select id="series"></select>
+            </div>
+            <div class="field">
+              <label>片型</label>
+              <select id="kind">
+                <option value="long">長影片</option>
+                <option value="short">Shorts</option>
+                <option value="mid">中長（非長片）</option>
+              </select>
+            </div>
+            <div class="field" style="grid-column: 1 / -1;">
+              <label>標題</label>
+              <input id="title" class="input" placeholder="例：滿杯的大腦，先被抱住才會動" />
+            </div>
+          </div>
+
+          <div class="hr"></div>
+
+          <div class="split2">
+            <div class="field">
+              <label>排程時間（24小時制）</label>
+              <input id="scheduleAt" class="input" type="datetime-local" />
+              <p class="muted" style="margin:8px 0 0;">
+                v1.4：清單會顯示倒數；到點會語音＋彈窗（前景）。
+              </p>
+            </div>
+            <div class="field">
+              <label>狀態</label>
+              <select id="status">
+                <option value="draft">草稿</option>
+                <option value="scheduled">已排程</option>
+                <option value="published">已發佈</option>
+              </select>
+              <div class="btnRow" style="margin-top:10px;">
+                <button class="btn ok" id="btnMarkPublished">一鍵標記：已發佈</button>
+                <button class="btn ghost" id="btnOpenStudio">開啟 YouTube Studio 上傳頁</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="hr"></div>
+
+          <div class="kpi">
+            <div class="pill">字數：<b id="wordCount">0</b></div>
+            <div class="pill">結構：<b id="structOk">-</b></div>
+            <div class="pill">長片≥3000：<b id="lenOk">-</b></div>
+          </div>
+
+          <div id="basicHint" style="margin-top:10px;"></div>
+        </div>
+
+        <!-- SCRIPT -->
+        <div class="panel" id="panel-script">
+          <div class="card" style="box-shadow:none; border-radius:14px; border:1px solid var(--line); background:rgba(0,0,0,.10)">
+            <div class="bd">
+              <div class="row" style="justify-content:space-between;">
+                <div>
+                  <div style="font-weight:900">模板生成器（初稿 → 丟 AI 優化 → 回來微調）</div>
+                  <div class="muted">填 4 格，一鍵填入 Hook/承諾/正文骨架；也可一鍵複製「AI 優化咒語包」。</div>
+                </div>
+                <div class="btnRow">
+                  <button class="btn ghost" id="btnTplFill">用模板填入</button>
+                  <button class="btn" id="btnTplCopy">複製 AI 優化咒語包</button>
+                </div>
+              </div>
+
+              <div class="hr"></div>
+
+              <div class="formGrid">
+                <div class="field">
+                  <label>主題一句</label>
+                  <input id="tplTopic" class="input" placeholder="例：滿杯的大腦，需要先被抱住" />
+                </div>
+                <div class="field">
+                  <label>觀眾卡點</label>
+                  <input id="tplPain" class="input" placeholder="例：一聽就不想聽／總是卡住改不了" />
+                </div>
+                <div class="field">
+                  <label>核心陪伴</label>
+                  <input id="tplPromise" class="input" placeholder="例：不是勸你改，是陪你被理解" />
+                </div>
+                <div class="field">
+                  <label>關鍵隱喻/概念</label>
+                  <input id="tplMetaphor" class="input" placeholder="例：系統/滿杯/僵化/安全感" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="hr"></div>
+
+          <div class="formGrid">
+            <div class="field" style="grid-column: 1 / -1;">
+              <label>Hook（必填）</label>
+              <textarea id="sHook" placeholder="3–15 秒：一句共感＋一句定位"></textarea>
+            </div>
+            <div class="field" style="grid-column: 1 / -1;">
+              <label>承諾（必填）</label>
+              <textarea id="sPromise" placeholder="這集會帶你看懂什麼／陪你得到什麼"></textarea>
+            </div>
+            <div class="field" style="grid-column: 1 / -1;">
+              <label>正文（必填，長片≥3000字）</label>
+              <textarea id="sBody" placeholder="建議 6–8 段，每段有小標。"></textarea>
+            </div>
+
+            <div class="field">
+              <label>CTA 模式</label>
+              <select id="ctaMode">
+                <option value="show">顯示 CTA</option>
+                <option value="off">關閉 CTA（留白收心）</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label>CTA（可自訂）</label>
+              <textarea id="sCta" placeholder="留空則用系統預設 CTA（含『每週更新』）。"></textarea>
+            </div>
+
+            <div class="field" style="grid-column: 1 / -1;">
+              <div class="btnRow">
+                <button class="btn ok" id="btnSaveScript">儲存文案</button>
+                <button class="btn ghost" id="btnCopyAllScript">一鍵複製：整份口說稿</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- PUBLISH -->
+        <div class="panel" id="panel-publish">
+          <div class="btnRow" style="justify-content:space-between;">
+            <div>
+              <div style="font-weight:900">一鍵上架包（不是自動上架，是「一鍵準備好上架」）</div>
+              <div class="muted">v1.4：生成後自動捲到文案並自動選取，方便直接貼上。</div>
+            </div>
+            <div class="btnRow">
+              <button class="btn ghost" id="btnGenPublish">生成上架包</button>
+              <button class="btn" id="btnCopyDesc">複製介紹文案</button>
+              <button class="btn" id="btnCopyTags">複製 #</button>
+              <button class="btn ok" id="btnCopyChecklist">複製上架清單</button>
+            </div>
+          </div>
+
+          <div class="hr"></div>
+
+          <div class="field">
+            <label>影片介紹文案（含更新宣告：每週更新）</label>
+            <textarea id="pDesc" placeholder="按『生成上架包』即可出現。"></textarea>
+          </div>
+
+          <div class="field" style="margin-top:10px;">
+            <label>Hashtags（品牌 / 系列 / 主題）</label>
+            <textarea id="pTags" class="mono" placeholder="#天使笑長 #幸福教養 ..."></textarea>
+          </div>
+
+          <div class="hr"></div>
+          <div id="publishHint"></div>
+        </div>
+
+        <!-- SETTINGS -->
+        <div class="panel" id="panel-settings">
+          <div class="field">
+            <label>語音提示（到點提醒）</label>
+            <div class="btnRow">
+              <button class="btn ghost" id="btnVoiceUnlock">啟用語音（先按一次）</button>
+              <button class="btn ghost" id="btnSpeakTest">測試播報</button>
+            </div>
+            <div class="hr"></div>
+            <div class="btnRow">
+              <button class="btn ok" id="btnVoiceOn">語音提示：開</button>
+              <button class="btn danger" id="btnVoiceOff">語音提示：關</button>
+              <div class="pill">目前：<b id="voiceState">-</b></div>
+            </div>
+            <p class="muted" style="margin-top:10px;">
+              iOS 需要先點一次「啟用語音」。提醒只在 App 前景有效。
+            </p>
+          </div>
+
+          <div class="hr"></div>
+
+          <div class="field">
+            <label>資料（備份／還原）</label>
+            <div class="btnRow">
+              <button class="btn ghost" id="btnBackup">複製備份（JSON）</button>
+              <button class="btn ghost" id="btnRestore">貼上還原（JSON）</button>
+              <button class="btn danger" id="btnWipe">清空全部資料</button>
+            </div>
+          </div>
+        </div>
+
+      </section>
+    </div>
+  </div>
+
+  <!-- Due Modal -->
+  <div class="modalMask" id="dueMask" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="modal">
+      <div class="modalHd">
+        <b>到點提醒（v1.4）</b>
+        <button class="btn ghost small" id="btnDueClose">關閉</button>
+      </div>
+
+      <div class="modalBd">
+        <p class="big" id="dueTitle">-</p>
+        <p class="metaLine" id="dueMeta">-</p>
+        <div class="countdown" id="dueCountdown">倒數：-</div>
+
+        <div class="okbox" style="margin:0;">
+          你可以直接在彈窗預覽「上架包」，也可一鍵複製並切到上架包頁。
+        </div>
+
+        <div class="previewBox">
+          <div class="previewHd">
+            <div class="ttl">上架包預覽</div>
+            <div class="previewTabs">
+              <div class="ptab active" data-pt="desc" id="ptabDesc">介紹文案</div>
+              <div class="ptab" data-pt="tags" id="ptabTags">Hashtags</div>
+              <div class="ptab" data-pt="check" id="ptabCheck">清單</div>
+            </div>
+          </div>
+          <div class="previewBody">
+            <pre class="previewPre" id="previewText"></pre>
+            <div class="hintTiny">提示：下方按鈕可一鍵複製；也可直接切到「上架包」頁。</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modalFoot">
+        <button class="btn ghost" id="btnDueGoPublish">切到上架包頁</button>
+        <button class="btn ghost" id="btnDueCopyDesc">複製介紹文案</button>
+        <button class="btn ghost" id="btnDueCopyTags">複製 #</button>
+        <button class="btn ghost" id="btnDueOpenStudio">開啟 Studio</button>
+        <button class="btn ok" id="btnDueMarkPublished">標記已發佈</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+(function(){
+  "use strict";
+
+  // ===== helpers =====
+  function $(id){ return document.getElementById(id); }
+  function esc(s){ return (s==null) ? "" : String(s); }
+  function now(){ return new Date(); }
+  function pad2(n){ n=parseInt(n,10); if (isNaN(n)) n=0; return (n<10)?"0"+n:""+n; }
+  function fmtYMDHM(d){
+    if (!d) return "-";
+    return d.getFullYear()+"-"+pad2(d.getMonth()+1)+"-"+pad2(d.getDate())+" "+pad2(d.getHours())+":"+pad2(d.getMinutes());
+  }
+  function parseLocalDT(s){
+    s = esc(s).trim(); if(!s) return null;
+    var parts=s.split("T"); if(parts.length!==2) return null;
+    var ymd=parts[0].split("-"); var hm=parts[1].split(":");
+    if(ymd.length!==3||hm.length<2) return null;
+    var y=parseInt(ymd[0],10), m=parseInt(ymd[1],10)-1, d=parseInt(ymd[2],10);
+    var h=parseInt(hm[0],10), mi=parseInt(hm[1],10);
+    if([y,m,d,h,mi].some(isNaN)) return null;
+    return new Date(y,m,d,h,mi,0,0);
+  }
+  function msToCountdown(ms){
+    if (ms <= 0) return "已到點";
+    var s = Math.floor(ms/1000);
+    var d = Math.floor(s/86400); s -= d*86400;
+    var h = Math.floor(s/3600); s -= h*3600;
+    var m = Math.floor(s/60);
+    if (d>0) return d+"天 "+h+"時 "+m+"分";
+    if (h>0) return h+"時 "+m+"分";
+    return m+"分";
+  }
+
+  function fallbackCopy(text){
+    var ta=document.createElement("textarea");
+    ta.value=text; ta.setAttribute("readonly","readonly");
+    ta.style.position="fixed"; ta.style.left="-9999px";
+    document.body.appendChild(ta);
+    ta.select();
+    try{ document.execCommand("copy"); }catch(e){}
+    document.body.removeChild(ta);
+  }
+  function copyToClipboard(text){
+    text = esc(text);
+    if (navigator.clipboard && navigator.clipboard.writeText){
+      return navigator.clipboard.writeText(text).catch(function(){ fallbackCopy(text); });
+    }
+    fallbackCopy(text);
+  }
+
+  function uid(){ return "v"+Date.now()+"_"+Math.floor(Math.random()*100000); }
+  function isNonEmpty(s){ return esc(s).trim().length>0; }
+
+  function countWordsMixed(text){
+    text = esc(text);
+    if (!text) return 0;
+    var cjk = text.match(/[\u4e00-\u9fff]/g);
+    var cjkCount = cjk ? cjk.length : 0;
+    var latin = text.replace(/[\u4e00-\u9fff]/g, " ");
+    latin = latin.replace(/[^A-Za-z0-9]+/g, " ").trim();
+    var latinCount = latin ? latin.split(" ").length : 0;
+    return cjkCount + latinCount;
+  }
+
+  // ===== data =====
+  var LS_KEY = "videoSecretary_v1_4";
+  var LS_VOICE = "videoSecretary_voice";
+  var LS_UNLOCK = "videoSecretary_voiceUnlocked";
+  var LS_PUBCOL = "videoSecretary_pubCollapsed";
+
+  var SERIES = [
+    "心理學","腦神經科學","心靈成長","幸福教養",
+    "幸福小腦袋","人生感悟","詩詞人生","其他"
+  ];
+
+  var state = {
+    videos: [],
+    editorId: null,
+    voiceEnabled: true,
+    voiceUnlocked: false,
+    dueModalId: null,
+    previewMode: "desc",
+    pubCollapsed: true
+  };
+
+  // ===== CTA =====
+  function defaultCtaText(){
+    return "如果你也在練習把心站穩，\n歡迎來到天使笑長的主頁。\n這裡有心理學、腦神經科學、心靈成長與幸福教養等系列，\n陪你瞭解自己，找到方向，一起活得自在。\n\n（每週更新）";
+  }
+
+  // ===== persistence =====
+  function load(){
+    try{
+      var raw = localStorage.getItem(LS_KEY);
+      if (raw){
+        var obj = JSON.parse(raw);
+        if (obj && obj.videos) state.videos = obj.videos;
+        if (obj && obj.editorId) state.editorId = obj.editorId;
+      }
+    }catch(e){}
+    try{
+      var v=localStorage.getItem(LS_VOICE);
+      if (v==="0") state.voiceEnabled=false;
+      if (v==="1") state.voiceEnabled=true;
+    }catch(e){}
+    try{
+      var u=localStorage.getItem(LS_UNLOCK);
+      if (u==="1") state.voiceUnlocked=true;
+    }catch(e){}
+    try{
+      var pc=localStorage.getItem(LS_PUBCOL);
+      if (pc==="0") state.pubCollapsed=false;
+      if (pc==="1") state.pubCollapsed=true;
+    }catch(e){}
+
+    if (!state.videos.length){
+      var demo = makeVideo();
+      demo.title = "示範：滿杯的大腦，需要先被抱住";
+      demo.series = "腦神經科學";
+      demo.kind = "long";
+      demo.status = "draft";
+      demo.script.ctaMode = "show";
+      state.videos.push(demo);
+      state.editorId = demo.id;
+      save();
+    }
+  }
+  function save(){
+    try{
+      localStorage.setItem(LS_KEY, JSON.stringify({videos: state.videos, editorId: state.editorId}));
+      localStorage.setItem(LS_VOICE, state.voiceEnabled ? "1":"0");
+      localStorage.setItem(LS_UNLOCK, state.voiceUnlocked ? "1":"0");
+      localStorage.setItem(LS_PUBCOL, state.pubCollapsed ? "1":"0");
+    }catch(e){}
+  }
+
+  // ===== model =====
+  function makeVideo(){
+    return {
+      id: uid(),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      series: "心理學",
+      kind: "long",
+      title: "",
+      status: "draft",
+      scheduleAt: "",
+      remindedAt: "",
+      modalShownAt: "",
+      script: { hook:"", promise:"", body:"", ctaMode:"show", cta:"" },
+      publish: { desc:"", tags:"" }
+    };
+  }
+  function getVideo(id){
+    id=esc(id);
+    for (var i=0;i<state.videos.length;i++){
+      if (state.videos[i].id===id) return state.videos[i];
+    }
+    return null;
+  }
+  function upsertVideo(v){
+    for (var i=0;i<state.videos.length;i++){
+      if (state.videos[i].id===v.id){ state.videos[i]=v; return; }
+    }
+    state.videos.unshift(v);
+  }
+
+  // ===== template =====
+  function buildTemplateDraft(inp){
+    var topic = esc(inp.topic).trim() || "（主題）";
+    var pain = esc(inp.pain).trim() || "（卡點）";
+    var promise = esc(inp.promise).trim() || "（核心陪伴）";
+    var metaphor = esc(inp.metaphor).trim() || "（關鍵概念）";
+
+    var hook =
+      "你有沒有發現，\n"+pain+"。\n"+
+      "不是你不努力，\n"+
+      "是你的大腦可能早就「滿杯了」。";
+
+    var prom =
+      "這一集我不急著教你改變，\n"+
+      "我想先陪你把『為什麼會這樣』看懂。\n"+
+      "當你被理解了，心才有空間慢慢更新。";
+
+    var body =
+      "【本集主題】"+topic+"\n"+
+      "【關鍵概念/隱喻】"+metaphor+"\n\n"+
+      "（第1段｜共感開場）\n從一個你日常的瞬間開始："+pain+"。\n\n"+
+      "（第2段｜系統觀點）\n大腦會分類、會省電、會走熟路。\n\n"+
+      "（第3段｜改變的代價＝物理成本）\n改變不是喊口號，是要挖新的神經小路。\n\n"+
+      "（第4段｜滿杯與僵化）\n『一聽就不想聽』其實是防火牆，不是壞。\n\n"+
+      "（第5段｜30秒～1分鐘可做的小練習）\n先慢下來／把事情說清楚／站好位置／讓關係軟一點。\n\n"+
+      "（第6段｜收束）\n回到承諾："+promise+"。\n";
+
+    return {hook:hook,promise:prom,body:body};
+  }
+
+  function buildAiPolishPack(v, inp){
+    var topic = esc(inp.topic).trim() || "（主題）";
+    var pain = esc(inp.pain).trim() || "（卡點）";
+    var promise = esc(inp.promise).trim() || "（核心陪伴）";
+    var metaphor = esc(inp.metaphor).trim() || "（關鍵概念）";
+    var mustNoCTA = (v.script.ctaMode==="off");
+
+    return (
+      "請用以下資訊，幫我寫一支 YouTube 口說稿。\n\n"+
+      "【品牌語感】把心站穩、活得自在、不說教、溫柔而篤定。\n"+
+      "【系列】"+esc(v.series)+"\n"+
+      "【片型】"+(v.kind==="long"?"長影片":(v.kind==="short"?"Shorts":"中長"))+"\n"+
+      "【字數】若為長影片，整體口說稿（Hook+承諾+正文+收尾）請 ≥ 3000 字。\n"+
+      "【結構硬規則】必須包含：Hook／承諾／正文／"+(mustNoCTA?"收尾留白（不導流）":"CTA（導到主頁，含『每週更新』）")+"。\n\n"+
+      "【主題一句】"+topic+"\n"+
+      "【觀眾卡點】"+pain+"\n"+
+      "【核心陪伴】"+promise+"\n"+
+      "【關鍵隱喻/概念】"+metaphor+"\n\n"+
+      "【內容要求】\n"+
+      "1) 先共感，不評判。\n"+
+      "2) 用『系統/滿杯/僵化/安全感』類比。\n"+
+      "3) 給 1 個可落地小練習（30 秒～1 分鐘）。\n"+
+      "4) 不要說教，要像被理解、被抱住。\n\n"+
+      "【你輸出的格式】\n"+
+      "A. Hook（3–15秒）\n"+
+      "B. 承諾\n"+
+      "C. 正文（6–8 段，每段小標）\n"+
+      (mustNoCTA ? "D. 收尾留白\n" : "D. CTA（導主頁＋每週更新）\n")+
+      "\n【CTA 參考】\n"+(mustNoCTA ? "（本集 CTA 關閉）" : defaultCtaText())
+    );
+  }
+
+  // ===== publish =====
+  function buildHashtags(v){
+    var tags=[];
+    tags.push("#天使笑長");
+    tags.push("#把心站穩");
+    tags.push("#"+esc(v.series));
+    if (v.kind==="long") tags.push("#長影片");
+    if (v.kind==="short") tags.push("#Shorts");
+    var title=esc(v.title).trim();
+    if (title){
+      var t=title.replace(/[\s，。、！？!?,.]+/g," ").trim();
+      var parts=t.split(" ");
+      if (parts[0]) tags.push("#"+parts[0]);
+      if (parts[1]) tags.push("#"+parts[1]);
+    }
+    var seen={}, out=[];
+    for (var i=0;i<tags.length;i++){
+      if (!seen[tags[i]]){ seen[tags[i]]=true; out.push(tags[i]); }
+    }
+    return out.join(" ");
+  }
+  function buildDescription(v){
+    var title=esc(v.title).trim()||"（未命名影片）";
+    var ctaMode=v.script.ctaMode||"show";
+    var cta=esc(v.script.cta).trim();
+    if (!cta) cta=defaultCtaText();
+
+    var lines=[];
+    lines.push("【影片主題】"+title);
+    lines.push("");
+    lines.push("如果你正在經歷「卡住、滿杯、很難改」的那一段，");
+    lines.push("這支影片不是要你更用力，而是先陪你被理解。");
+    lines.push("");
+    lines.push("——");
+    lines.push("更新宣告：每週更新");
+    lines.push("——");
+    lines.push("");
+    if (ctaMode==="show"){
+      lines.push(cta);
+    }else{
+      lines.push("（收心留白）");
+      lines.push("願你今天，也能把心放回中間。");
+    }
+    return lines.join("\n");
+  }
+  function buildChecklist(){
+    return [
+      "【上架清單】",
+      "□ 標題已確認",
+      "□ 介紹文案已貼（含每週更新）",
+      "□ Hashtags 已貼",
+      "□ 縮圖已上傳",
+      "□ 播放清單已選",
+      "□ 發佈時間已設定（24 小時制）",
+      "□ 已發佈後回來按：一鍵標記『已發佈』"
+    ].join("\n");
+  }
+  function ensurePublishPack(v){
+    if (!esc(v.publish.desc).trim()) v.publish.desc=buildDescription(v);
+    if (!esc(v.publish.tags).trim()) v.publish.tags=buildHashtags(v);
+  }
+
+  // ===== validation =====
+  function calcScriptWordCount(v){
+    var t="";
+    t+="\n"+esc(v.script.hook);
+    t+="\n"+esc(v.script.promise);
+    t+="\n"+esc(v.script.body);
+    t+="\n"+(v.script.ctaMode==="show"?esc(v.script.cta):"");
+    return countWordsMixed(t);
+  }
+  function validateStructure(v){
+    if (!isNonEmpty(v.script.hook)) return false;
+    if (!isNonEmpty(v.script.promise)) return false;
+    if (!isNonEmpty(v.script.body)) return false;
+    return true;
+  }
+  function validateLongLength(v){
+    if (v.kind!=="long") return true;
+    return calcScriptWordCount(v)>=3000;
+  }
+
+  // ===== voice =====
+  function canSpeak(){ return !!(window.speechSynthesis && window.SpeechSynthesisUtterance); }
+  function speak(text){
+    text=esc(text).trim();
+    if(!text) return;
+    if(!state.voiceEnabled) return;
+    if(!state.voiceUnlocked) return;
+    if(!canSpeak()) return;
+    if(document.hidden) return;
+    try{
+      window.speechSynthesis.cancel();
+      var ut=new SpeechSynthesisUtterance(text);
+      ut.lang="zh-TW"; ut.rate=1.0; ut.pitch=1.0; ut.volume=1.0;
+      window.speechSynthesis.speak(ut);
+    }catch(e){}
+  }
+  function voiceUnlock(){
+    if(!canSpeak()){ alert("此裝置/瀏覽器不支援語音播報。"); return; }
+    try{
+      window.speechSynthesis.cancel();
+      var ut=new SpeechSynthesisUtterance("語音提示已啟用");
+      ut.lang="zh-TW";
+      window.speechSynthesis.speak(ut);
+      state.voiceUnlocked=true;
+      save(); renderVoiceState();
+    }catch(e){ alert("語音啟用失敗，請換瀏覽器或再試一次。"); }
+  }
+  function buildReminderText(v){
+    var title=esc(v.title).trim()||"這支影片";
+    return "影音秘書提醒你，《"+title+"》已經到排程時間了。";
+  }
+
+  // ===== due detection =====
+  function isVideoDue(v, nowD){
+    if (!v) return false;
+    if (v.status!=="scheduled") return false;
+    var sd=parseLocalDT(v.scheduleAt);
+    if (!sd) return false;
+    return nowD.getTime()>=sd.getTime();
+  }
+  function shouldShowModal(v, nowD){
+    if (document.hidden) return false;
+    var last=esc(v.modalShownAt).trim();
+    if(!last) return true;
+    var d=new Date(last);
+    if(isNaN(d.getTime())) return true;
+    var diff=nowD.getTime()-d.getTime();
+    return !(diff>=0 && diff<2*60*60*1000); // 2h
+  }
+
+  // ===== modal preview =====
+  function setPreviewTab(mode){
+    state.previewMode=mode;
+    ["desc","tags","check"].forEach(function(m){
+      var el = $("ptab"+(m==="desc"?"Desc":(m==="tags"?"Tags":"Check")));
+      if (!el) return;
+      if (m===mode) el.classList.add("active"); else el.classList.remove("active");
+    });
+    var v=getVideo(state.dueModalId||state.editorId);
+    renderDuePreview(v);
+  }
+  function renderDuePreview(v){
+    if(!v) return;
+    ensurePublishPack(v);
+    var t="";
+    if(state.previewMode==="desc") t=esc(v.publish.desc).trim();
+    else if(state.previewMode==="tags") t=esc(v.publish.tags).trim();
+    else t=buildChecklist();
+    $("previewText").textContent = t || "（尚無內容）";
+  }
+
+  function openDueModal(v){
+    state.dueModalId=v.id;
+    $("dueTitle").textContent="《"+(esc(v.title).trim()||"未命名影片")+"》到點提醒";
+    var sd=parseLocalDT(v.scheduleAt);
+    $("dueMeta").textContent="系列："+esc(v.series)+"｜排程："+(sd?fmtYMDHM(sd):"-")+"｜現在："+fmtYMDHM(now());
+    setPreviewTab("desc");
+    $("dueMask").classList.add("show");
+    $("dueMask").setAttribute("aria-hidden","false");
+  }
+  function closeDueModal(){
+    state.dueModalId=null;
+    $("dueMask").classList.remove("show");
+    $("dueMask").setAttribute("aria-hidden","true");
+  }
+
+  // ===== list priority + countdown tag (v1.4) =====
+  function msUntilSchedule(v, nowD){
+    if (!v || v.status!=="scheduled") return null;
+    var sd=parseLocalDT(v.scheduleAt);
+    if (!sd) return null;
+    return sd.getTime()-nowD.getTime();
+  }
+
+  // ===== render =====
+  function renderSeriesSelect(){
+    var sel=$("series"); sel.innerHTML="";
+    SERIES.forEach(function(s){
+      var op=document.createElement("option");
+      op.value=s; op.textContent=s; sel.appendChild(op);
+    });
+  }
+  function setStatusBadge(v){
+    var b=$("statusBadge"); var s=esc(v.status);
+    b.className="status "+(s==="scheduled"?"scheduled":(s==="published"?"published":"draft"));
+    b.textContent=s;
+  }
+  function renderVoiceState(){
+    $("voiceState").textContent=(state.voiceEnabled?"開":"關")+"｜"+(state.voiceUnlocked?"已啟用":"未啟用");
+  }
+
+  function renderBasicEditor(v){
+    $("series").value=v.series;
+    $("kind").value=v.kind;
+    $("title").value=v.title;
+    $("status").value=v.status;
+    $("scheduleAt").value=v.scheduleAt||"";
+    setStatusBadge(v);
+
+    var wc=calcScriptWordCount(v);
+    $("wordCount").textContent=String(wc);
+
+    var structOk=validateStructure(v);
+    $("structOk").textContent=structOk?"OK":"缺";
+    $("structOk").style.color=structOk?"#d8ffe1":"#ffd2d2";
+
+    var lenOk=validateLongLength(v);
+    $("lenOk").textContent=(v.kind==="long")?(lenOk?"OK":"未達"):"-";
+    $("lenOk").style.color=(v.kind==="long")?(lenOk?"#d8ffe1":"#ffd2d2"):"#eef7f2";
+
+    var hint=$("basicHint"); hint.innerHTML="";
+    if (v.kind==="long" && !lenOk){
+      var box=document.createElement("div");
+      box.className="warn";
+      box.textContent="長影片口說稿需 ≥ 3000 字（目前約 "+wc+"）。建議：模板→AI 優化→貼回正文。";
+      hint.appendChild(box);
+    }else if(!structOk){
+      var box2=document.createElement("div");
+      box2.className="warn";
+      box2.textContent="結構缺少 Hook／承諾／正文。請到「文案」頁補齊。";
+      hint.appendChild(box2);
+    }else{
+      var ok=document.createElement("div");
+      ok.className="okbox";
+      ok.textContent="流程建議：完成文案 → 生成上架包 → 設定排程 → 到點提醒。";
+      hint.appendChild(ok);
+    }
+  }
+
+  function renderScriptEditor(v){
+    $("sHook").value=esc(v.script.hook);
+    $("sPromise").value=esc(v.script.promise);
+    $("sBody").value=esc(v.script.body);
+    $("ctaMode").value=esc(v.script.ctaMode)||"show";
+    $("sCta").value=esc(v.script.cta);
+  }
+
+  function renderPublish(v){
+    $("pDesc").value=esc(v.publish.desc);
+    $("pTags").value=esc(v.publish.tags);
+    var hint=$("publishHint"); hint.innerHTML="";
+    var structOk=validateStructure(v);
+    var lenOk=validateLongLength(v);
+
+    if(!structOk){
+      var w=document.createElement("div");
+      w.className="warn";
+      w.textContent="上架前提醒：文案結構尚未完整（Hook/承諾/正文）。";
+      hint.appendChild(w);
+    }else if(v.kind==="long" && !lenOk){
+      var w2=document.createElement("div");
+      w2.className="warn";
+      w2.textContent="上架前提醒：長影片口說稿需 ≥ 3000 字。";
+      hint.appendChild(w2);
+    }else{
+      var ok=document.createElement("div");
+      ok.className="okbox";
+      ok.textContent="上架包可用：介紹文案與 # 一鍵複製貼到 YouTube Studio。";
+      hint.appendChild(ok);
+    }
+  }
+
+  function renderList(){
+    var list=$("list");
+    var pubList=$("pubList");
+    list.innerHTML=""; pubList.innerHTML="";
+
+    var query=esc($("q").value).trim().toLowerCase();
+    var nowD=now();
+
+    var vids=state.videos.slice();
+
+    function priority(v){
+      if (!v) return 99;
+      if (v.status==="scheduled"){
+        if (isVideoDue(v, nowD)) return 0;
+        return 1;
+      }
+      if (v.status==="draft") return 2;
+      if (v.status==="published") return 3;
+      return 9;
+    }
+
+    vids.sort(function(a,b){
+      var pa=priority(a), pb=priority(b);
+      if (pa!==pb) return pa-pb;
+      var da=parseLocalDT(a.scheduleAt); var db=parseLocalDT(b.scheduleAt);
+      var ta=da?da.getTime():0; var tb=db?db.getTime():0;
+      if (pa===1 && ta!==tb) return ta-tb; // scheduled upcoming earliest first
+      return (esc(b.updatedAt)>esc(a.updatedAt))?1:-1;
+    });
+
+    var pubCount=0;
+
+    vids.forEach(function(v){
+      var title=esc(v.title).trim()||"（未命名）";
+      var meta=(esc(v.series)+"｜"+(v.kind==="long"?"長影片":(v.kind==="short"?"Shorts":"中長"))).trim();
+      var stat=esc(v.status);
+
+      var filterText=(title+" "+meta+" "+stat).toLowerCase();
+      if (query && filterText.indexOf(query)===-1) return;
+
+      var due=isVideoDue(v, nowD);
+      var msLeft=msUntilSchedule(v, nowD);
+
+      var item=document.createElement("div");
+      item.className="item"+(due?" isDue":"");
+      item.setAttribute("data-id", v.id);
+
+      var left=document.createElement("div");
+      left.className="meta";
+
+      var p1=document.createElement("p");
+      p1.className="ttl"; p1.textContent=title;
+
+      var p2=document.createElement("p");
+      p2.className="sub";
+      var sch="";
+      if (v.scheduleAt){
+        var sd=parseLocalDT(v.scheduleAt);
+        if (sd) sch="｜排程 "+fmtYMDHM(sd);
+      }
+      p2.textContent=meta+sch;
+
+      left.appendChild(p1); left.appendChild(p2);
+
+      var tags=document.createElement("div");
+      tags.style.marginTop="2px";
+
+      var b1=document.createElement("span");
+      b1.className="status "+(due?"due":(stat==="scheduled"?"scheduled":(stat==="published"?"published":"draft")));
+      b1.textContent=due?"due":stat;
+      tags.appendChild(b1);
+
+      var wc=calcScriptWordCount(v);
+      var chip=document.createElement("span");
+      chip.className="tag"; chip.textContent="字數 "+wc;
+      tags.appendChild(chip);
+
+      var chip2=document.createElement("span");
+      chip2.className="tag"; chip2.textContent="CTA "+(v.script.ctaMode==="off"?"關":"開");
+      tags.appendChild(chip2);
+
+      // v1.4 countdown tag
+      if (v.status==="scheduled" && msLeft!=null){
+        var chip3=document.createElement("span");
+        chip3.className="tag";
+        chip3.textContent="倒數 "+msToCountdown(msLeft);
+        tags.appendChild(chip3);
+      }
+
+      left.appendChild(tags);
+
+      var right=document.createElement("div");
+      right.className="btnRow";
+
+      var btnEdit=document.createElement("button");
+      btnEdit.className="btn ghost small";
+      btnEdit.textContent=(state.editorId===v.id)?"編輯中":"編輯";
+      btnEdit.disabled=(state.editorId===v.id);
+      right.appendChild(btnEdit);
+
+      item.appendChild(left); item.appendChild(right);
+
+      item.addEventListener("click", function(){
+        state.editorId=v.id; save(); renderAll();
+        if (isVideoDue(v, now()) && !document.hidden){
+          v.modalShownAt=new Date().toISOString();
+          v.updatedAt=v.modalShownAt;
+          upsertVideo(v); save();
+          openDueModal(v);
+        }
+      });
+      btnEdit.addEventListener("click", function(e){
+        e.stopPropagation();
+        state.editorId=v.id; save(); renderAll();
+      });
+
+      // published -> collapsed area
+      if (v.status==="published"){
+        pubCount++;
+        pubList.appendChild(item);
+      }else{
+        list.appendChild(item);
+      }
+    });
+
+    $("pubCount").textContent=String(pubCount);
+
+    if (!list.children.length){
+      var empty=document.createElement("div");
+      empty.className="muted";
+      empty.textContent="（沒有符合的項目）";
+      list.appendChild(empty);
+    }
+    if (!pubList.children.length){
+      var empty2=document.createElement("div");
+      empty2.className="muted";
+      empty2.textContent="（尚無已發佈影片）";
+      pubList.appendChild(empty2);
+    }
+
+    // collapse state
+    var body=$("pubBody");
+    var hd=$("pubToggle");
+    if (state.pubCollapsed){
+      body.classList.remove("show");
+      hd.setAttribute("aria-expanded","false");
+    }else{
+      body.classList.add("show");
+      hd.setAttribute("aria-expanded","true");
+    }
+  }
+
+  function renderAll(){
+    $("nowText").textContent=fmtYMDHM(now());
+    renderList();
+
+    var v=getVideo(state.editorId);
+    if(!v){
+      state.editorId=state.videos[0]?state.videos[0].id:null;
+      v=getVideo(state.editorId); save();
+    }
+    if(!v) return;
+
+    renderBasicEditor(v);
+    renderScriptEditor(v);
+    renderPublish(v);
+    renderVoiceState();
+
+    // modal countdown refresh
+    tickModalCountdown();
+  }
+
+  // ===== tabs =====
+  function setTab(name){
+    document.querySelectorAll(".tab").forEach(function(t){
+      if (t.getAttribute("data-tab")===name) t.classList.add("active");
+      else t.classList.remove("active");
+    });
+    [["basic","panel-basic"],["script","panel-script"],["publish","panel-publish"],["settings","panel-settings"]].forEach(function(p){
+      var key=p[0], id=p[1];
+      var el=$(id);
+      if (key===name) el.classList.add("active");
+      else el.classList.remove("active");
+    });
+    try{ document.querySelector(".card:last-child").scrollIntoView({behavior:"smooth", block:"start"}); }catch(e){}
+  }
+
+  // ===== due reminder (minute) =====
+  function checkDueAndRemind(){
+    var nowD=now();
+    var dueCount=0;
+    var firstDueToModal=null;
+
+    state.videos.forEach(function(v){
+      if (!isVideoDue(v, nowD)) return;
+      dueCount++;
+
+      // speak gating: once per 6h per video
+      var shouldSpeak=true;
+      var ra=esc(v.remindedAt).trim();
+      if (ra){
+        var d=new Date(ra);
+        if (!isNaN(d.getTime())){
+          var diff=nowD.getTime()-d.getTime();
+          if (diff>=0 && diff<6*60*60*1000) shouldSpeak=false;
+        }
+      }
+      if (shouldSpeak && !document.hidden){
+        v.remindedAt=nowD.toISOString();
+        v.updatedAt=v.remindedAt;
+        upsertVideo(v); save();
+        speak(buildReminderText(v));
+      }
+
+      if (!firstDueToModal && shouldShowModal(v, nowD)) firstDueToModal=v;
+    });
+
+    $("dueText").textContent=String(dueCount);
+
+    if (firstDueToModal && !$("dueMask").classList.contains("show")){
+      firstDueToModal.modalShownAt=nowD.toISOString();
+      firstDueToModal.updatedAt=firstDueToModal.modalShownAt;
+      upsertVideo(firstDueToModal); save();
+
+      state.editorId=firstDueToModal.id; save();
+      renderAll();
+      openDueModal(firstDueToModal);
+    }
+
+    renderList();
+  }
+
+  // ===== modal countdown (v1.4, every 1s) =====
+  function tickModalCountdown(){
+    if (!$("dueMask").classList.contains("show")) return;
+    var v=getVideo(state.dueModalId);
+    if (!v) return;
+    var sd=parseLocalDT(v.scheduleAt);
+    if (!sd){ $("dueCountdown").textContent="倒數：-"; return; }
+    var ms=sd.getTime()-now().getTime();
+    $("dueCountdown").textContent="倒數："+msToCountdown(ms);
+  }
+
+  // ===== bind =====
+  function bind(){
+    $("tabs").addEventListener("click", function(e){
+      var el=e.target;
+      if (el && el.classList && el.classList.contains("tab")){
+        setTab(el.getAttribute("data-tab"));
+      }
+    });
+
+    $("q").addEventListener("input", renderList);
+
+    $("pubToggle").addEventListener("click", function(){
+      state.pubCollapsed = !state.pubCollapsed;
+      save(); renderList();
+    });
+
+    $("btnNew").addEventListener("click", function(){
+      var v=makeVideo();
+      state.videos.unshift(v);
+      state.editorId=v.id;
+      save(); renderAll();
+      setTab("basic");
+    });
+
+    $("btnExport").addEventListener("click", function(){
+      copyToClipboard(JSON.stringify({videos: state.videos}, null, 2));
+      alert("已複製 JSON（可貼到記事本備份）");
+    });
+
+    $("btnImport").addEventListener("click", function(){
+      var raw=prompt("請貼上 JSON：");
+      if(!raw) return;
+      try{
+        var obj=JSON.parse(raw);
+        if(obj && obj.videos && obj.videos.length){
+          state.videos=obj.videos;
+          state.editorId=obj.videos[0].id;
+          save(); renderAll();
+          alert("匯入完成");
+        }else alert("格式不正確（需要 videos 陣列）");
+      }catch(e){ alert("JSON 解析失敗"); }
+    });
+
+    $("btnDuplicate").addEventListener("click", function(){
+      var v=getVideo(state.editorId); if(!v) return;
+      var nv=JSON.parse(JSON.stringify(v));
+      nv.id=uid();
+      nv.title=(esc(v.title).trim()?v.title+"（複製）":"（複製）");
+      nv.status="draft";
+      nv.scheduleAt="";
+      nv.remindedAt="";
+      nv.modalShownAt="";
+      nv.createdAt=new Date().toISOString();
+      nv.updatedAt=nv.createdAt;
+      state.videos.unshift(nv);
+      state.editorId=nv.id;
+      save(); renderAll();
+    });
+
+    $("btnDelete").addEventListener("click", function(){
+      var v=getVideo(state.editorId); if(!v) return;
+      if(!confirm("確定刪除這支影片？")) return;
+      state.videos = state.videos.filter(function(x){ return x.id!==v.id; });
+      state.editorId = state.videos[0]?state.videos[0].id:null;
+      save(); renderAll();
+    });
+
+    // basic fields
+    $("series").addEventListener("change", function(){
+      var v=getVideo(state.editorId); if(!v) return;
+      v.series=$("series").value;
+      v.updatedAt=new Date().toISOString();
+      upsertVideo(v); save(); renderAll();
+    });
+    $("kind").addEventListener("change", function(){
+      var v=getVideo(state.editorId); if(!v) return;
+      v.kind=$("kind").value;
+      v.updatedAt=new Date().toISOString();
+      upsertVideo(v); save(); renderAll();
+    });
+    $("title").addEventListener("input", function(){
+      var v=getVideo(state.editorId); if(!v) return;
+      v.title=$("title").value;
+      v.updatedAt=new Date().toISOString();
+      upsertVideo(v); save(); renderAll();
+    });
+    $("scheduleAt").addEventListener("change", function(){
+      var v=getVideo(state.editorId); if(!v) return;
+      v.scheduleAt=$("scheduleAt").value;
+      v.remindedAt=""; v.modalShownAt="";
+      v.updatedAt=new Date().toISOString();
+      upsertVideo(v); save(); renderAll();
+    });
+    $("status").addEventListener("change", function(){
+      var v=getVideo(state.editorId); if(!v) return;
+      v.status=$("status").value;
+      v.updatedAt=new Date().toISOString();
+      upsertVideo(v); save(); renderAll();
+    });
+
+    $("btnMarkPublished").addEventListener("click", function(){
+      var v=getVideo(state.editorId); if(!v) return;
+      v.status="published";
+      v.updatedAt=new Date().toISOString();
+      upsertVideo(v); save(); renderAll();
+      alert("已標記為『已發佈』");
+      closeDueModal();
+    });
+    $("btnOpenStudio").addEventListener("click", function(){
+      window.open("https://studio.youtube.com/channel/UC/videos/upload","_blank");
+    });
+
+    // template
+    $("btnTplFill").addEventListener("click", function(){
+      var v=getVideo(state.editorId); if(!v) return;
+      var inp={topic:$("tplTopic").value,pain:$("tplPain").value,promise:$("tplPromise").value,metaphor:$("tplMetaphor").value};
+      var d=buildTemplateDraft(inp);
+      if(!isNonEmpty(v.script.hook)) v.script.hook=d.hook;
+      if(!isNonEmpty(v.script.promise)) v.script.promise=d.promise;
+      if(!isNonEmpty(v.script.body)) v.script.body=d.body;
+      v.updatedAt=new Date().toISOString();
+      upsertVideo(v); save(); renderAll();
+      alert("已用模板填入初稿（不覆蓋你已寫內容）。");
+    });
+    $("btnTplCopy").addEventListener("click", function(){
+      var v=getVideo(state.editorId); if(!v) return;
+      var inp={topic:$("tplTopic").value,pain:$("tplPain").value,promise:$("tplPromise").value,metaphor:$("tplMetaphor").value};
+      copyToClipboard(buildAiPolishPack(v, inp));
+      alert("已複製『AI 優化咒語包』");
+    });
+
+    // script save/copy
+    $("btnSaveScript").addEventListener("click", function(){
+      var v=getVideo(state.editorId); if(!v) return;
+      v.script.hook=$("sHook").value;
+      v.script.promise=$("sPromise").value;
+      v.script.body=$("sBody").value;
+      v.script.ctaMode=$("ctaMode").value;
+      v.script.cta=$("sCta").value;
+      v.updatedAt=new Date().toISOString();
+      upsertVideo(v); save(); renderAll();
+      alert("已儲存文案");
+    });
+    $("btnCopyAllScript").addEventListener("click", function(){
+      var v=getVideo(state.editorId); if(!v) return;
+      var ctaMode=v.script.ctaMode||"show";
+      var cta=esc(v.script.cta).trim()||defaultCtaText();
+      var out=[];
+      out.push("【Hook】\n"+esc(v.script.hook).trim());
+      out.push("\n【承諾】\n"+esc(v.script.promise).trim());
+      out.push("\n【正文】\n"+esc(v.script.body).trim());
+      out.push("\n"+(ctaMode==="show"?"【CTA】":"【收尾留白】")+"\n"+(ctaMode==="show"?cta:"願你今天，也能把心放回中間。"));
+      copyToClipboard(out.join("\n"));
+      alert("已複製整份口說稿");
+    });
+
+    // publish generation + auto scroll/select (v1.4)
+    function genPublishAndFocus(){
+      var v=getVideo(state.editorId); if(!v) return;
+      v.publish.desc=buildDescription(v);
+      v.publish.tags=buildHashtags(v);
+      v.updatedAt=new Date().toISOString();
+      upsertVideo(v); save(); renderAll();
+
+      // auto scroll to desc + select
+      setTab("publish");
+      setTimeout(function(){
+        try{
+          $("pDesc").focus();
+          $("pDesc").select();
+          $("pDesc").scrollIntoView({behavior:"smooth", block:"center"});
+        }catch(e){}
+      }, 100);
+      alert("已生成上架包（並自動選取介紹文案）");
+    }
+
+    $("btnGenPublish").addEventListener("click", genPublishAndFocus);
+
+    $("btnCopyDesc").addEventListener("click", function(){
+      copyToClipboard($("pDesc").value);
+      try{ $("pDesc").focus(); $("pDesc").select(); }catch(e){}
+      alert("已複製介紹文案");
+    });
+    $("btnCopyTags").addEventListener("click", function(){
+      copyToClipboard($("pTags").value);
+      try{ $("pTags").focus(); $("pTags").select(); }catch(e){}
+      alert("已複製 hashtags");
+    });
+    $("btnCopyChecklist").addEventListener("click", function(){
+      copyToClipboard(buildChecklist());
+      alert("已複製上架清單");
+    });
+
+    // voice
+    $("btnVoiceUnlock").addEventListener("click", voiceUnlock);
+    $("btnSpeakTest").addEventListener("click", function(){
+      if(!state.voiceUnlocked){ alert("請先按『啟用語音』一次。"); return; }
+      speak("影音秘書測試播報。");
+    });
+    $("btnVoiceOn").addEventListener("click", function(){ state.voiceEnabled=true; save(); renderVoiceState(); alert("語音提示已開"); });
+    $("btnVoiceOff").addEventListener("click", function(){ state.voiceEnabled=false; save(); renderVoiceState(); alert("語音提示已關"); });
+
+    // backup/restore/wipe
+    $("btnBackup").addEventListener("click", function(){
+      copyToClipboard(JSON.stringify({videos: state.videos}, null, 2));
+      alert("已複製備份 JSON");
+    });
+    $("btnRestore").addEventListener("click", function(){
+      var raw=prompt("貼上要還原的 JSON："); if(!raw) return;
+      try{
+        var obj=JSON.parse(raw);
+        if(obj && obj.videos){
+          state.videos=obj.videos;
+          state.editorId=obj.videos[0]?obj.videos[0].id:null;
+          save(); renderAll();
+          alert("還原完成");
+        }else alert("格式不正確");
+      }catch(e){ alert("JSON 解析失敗"); }
+    });
+    $("btnWipe").addEventListener("click", function(){
+      if(!confirm("確定清空全部資料？這無法復原。")) return;
+      state.videos=[];
+      state.editorId=null;
+      save();
+      load(); renderAll();
+    });
+
+    // due modal
+    $("btnDueClose").addEventListener("click", closeDueModal);
+    $("dueMask").addEventListener("click", function(e){
+      if (e && e.target===$("dueMask")) closeDueModal();
+    });
+    $("ptabDesc").addEventListener("click", function(){ setPreviewTab("desc"); });
+    $("ptabTags").addEventListener("click", function(){ setPreviewTab("tags"); });
+    $("ptabCheck").addEventListener("click", function(){ setPreviewTab("check"); });
+
+    $("btnDueGoPublish").addEventListener("click", function(){
+      var v=getVideo(state.dueModalId); if(!v) return;
+      // v1.4: if publish pack empty, auto generate then open
+      ensurePublishPack(v);
+      closeDueModal();
+      setTab("publish");
+      setTimeout(function(){
+        $("pDesc").focus(); $("pDesc").select();
+        $("pDesc").scrollIntoView({behavior:"smooth", block:"center"});
+      }, 100);
+    });
+
+    $("btnDueCopyDesc").addEventListener("click", function(){
+      var v=getVideo(state.dueModalId); if(!v) return;
+      ensurePublishPack(v);
+      copyToClipboard(esc(v.publish.desc).trim());
+      alert("已複製介紹文案");
+    });
+    $("btnDueCopyTags").addEventListener("click", function(){
+      var v=getVideo(state.dueModalId); if(!v) return;
+      ensurePublishPack(v);
+      copyToClipboard(esc(v.publish.tags).trim());
+      alert("已複製 hashtags");
+    });
+    $("btnDueOpenStudio").addEventListener("click", function(){
+      window.open("https://studio.youtube.com/channel/UC/videos/upload","_blank");
+    });
+    $("btnDueMarkPublished").addEventListener("click", function(){
+      var v=getVideo(state.dueModalId); if(!v) return;
+      v.status="published";
+      v.updatedAt=new Date().toISOString();
+      upsertVideo(v); save(); renderAll();
+      alert("已標記為『已發佈』");
+      closeDueModal();
+    });
+  }
+
+  // ===== timers =====
+  function startTimers(){
+    setInterval(function(){
+      $("nowText").textContent = fmtYMDHM(now());
+      tickModalCountdown();
+    }, 1000);
+
+    setInterval(function(){
+      checkDueAndRemind();
+      renderList(); // refresh countdown labels
+    }, 60*1000);
+
+    checkDueAndRemind();
+  }
+
+  // ===== sw =====
+  function registerSW(){
+    if (!("serviceWorker" in navigator)) return;
+    navigator.serviceWorker.register("./sw.js").catch(function(){});
+  }
+
+  // ===== init =====
+  function init(){
+    renderSeriesSelect();
+    load();
+    bind();
+    renderAll();
+    registerSW();
+    startTimers();
+  }
+  init();
+
+})();
+</script>
+
+</body>
+                    </html>
